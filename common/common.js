@@ -9,14 +9,15 @@ CURR_TURN = {
 CurrentTurnOrders = new Mongo.Collection("current_turn_orders");
 
 TURN = {
-	DURATION: 1
+	DURATION: 2
 };
 
 ORDERS = [
 	'top',
 	'left',
 	'right',
-	'bottom'
+	'bottom',
+	'fire'
 ];
 
 MapTiles = new Mongo.Collection("map_tiles");
@@ -31,7 +32,8 @@ MapObjects = new Mongo.Collection("map_objs");
 
 OBJS_TYPES = {
 	INVALID_ID: 0,
-	PLAYER: 1
+	PLAYER: 1,
+	MERCHANT: 2
 };
 
 Obj = function(x, y, type){
@@ -44,4 +46,8 @@ Obj = function(x, y, type){
 
 Player = function(x, y){
 	return new Obj(x, y, OBJS_TYPES.PLAYER);
+}
+
+Merchant = function(x, y){
+	return new Obj(x, y, OBJS_TYPES.MERCHANT);
 }

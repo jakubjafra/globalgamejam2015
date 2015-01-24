@@ -15,7 +15,7 @@
 				</div>
 			{{/each}}
 		</div>
-		<input id="chat_input" type="text" placeholder="chat input" />
+		<input id="chat_input" type="text" placeholder="chat input" focused />
 		timeleft: {{ turnTimeleft }}
 		<div class="list">
 			{{#each commandsList}}
@@ -33,18 +33,27 @@
 
 		<div id="map" style="top: {{ viewportOffsetTop }}px; left: {{ viewportOffsetLeft }}px; width: {{ viewport.width }}px; height: {{ viewport.height }}px;">
 			{{#each mapTilesList}}
-				<div class="map_tile {{ tileClass }}" style="top: {{ topXY }}px; left: {{ leftXY }}px;">
-				</div>
+				{{> Tile}}
 			{{/each}}
 			{{#each mapObjsList}}
-				<div class="map_object {{ objClass }} {{ objLastMovement }}" style="top: 168px; left: 168px; {{ movementTransition }}">
-				</div>
+				{{> Obj}}
 			{{/each}}
 		</div>
 	</div>
 </template>
 
 <template name="Player">
-	<div class="map_object {{ objClass }} {{ objLastMovement }}" style="top: 168px; left: 168px; {{ movementTransition }}">
+	<div class="map_object player {{ objLastMovement }}" style="{{ movementTransition }}">
+	</div>
+</template>
+
+<template name="Obj">
+	<div class="map_object {{ objClass }} {{ objLastMovement }}" style="top: {{ topXY }}px; left: {{ leftXY }}px; {{ movementTransition }}">
+	</div>
+</template>
+
+<template name="Tile">
+	<div class="map_tile {{ tileClass }}" style="top: {{ topXY }}px; left: {{ leftXY }}px;">
+		<div></div>
 	</div>
 </template>

@@ -3,7 +3,7 @@ var ENTER_KEY_CODE = 13;
 var TILE_WIDTH = 64;
 var TILE_HEIGHT = 64;
 
-var VIEWPORT_WIDTH = 400;
+var VIEWPORT_WIDTH = 800;
 var VIEWPORT_HEIGHT = 400;
 
 Template.Chat.helpers({
@@ -14,7 +14,7 @@ Template.Chat.helpers({
 		return CurrentTurnOrders.find({}, { sort: {"seq": -1} });
 	},
 	'turnTimeleft': function(){
-		return CurrentTurn.findOne({t: 1}).timeleft;
+		return CurrentTurn.findOne({t: CURR_TURN.COUNTER}).timeleft;
 	}
 });
 
@@ -29,11 +29,36 @@ Template.Chat.events({
 	}
 });
 
+Template.Tile.helpers({
+	'leftXY': function(){ return this.left * TILE_WIDTH; },
+	'topXY': function(){ return this.top * TILE_HEIGHT; },
+
+	'tileClass': function(){
+		switch(this.type){
+			case 'i': return "island";
+			case '1': return "stones1";
+			case '2': return "stones2";
+			case '3': return "stones3";
+			case 's': return "siren";
+			case '.': return "ground";
+			default: return "";
+		}
+	}
+});
+
+Template.Tile.rendered = function(){
+	Meteor.setTimeout(_.bind(function(){
+			this.findAll(".map_tile > div")[0].className += "animation";
+		}, this),
+		Math.floor(Math.random() * 2000)
+	);
+}
+
 Template.Viewport.helpers({
 	'mapTilesList': function(){ return MapTiles.find({}); },
 	'mapObjsList': function(){ return MapObjects.find({type: {$ne: OBJS_TYPES.PLAYER}}); },
 
-	'leftXY': function(){ console.log(this); return this.left * TILE_WIDTH; },
+	'leftXY': function(){ return this.left * TILE_WIDTH; },
 	'topXY': function(){ return this.top * TILE_HEIGHT; },
 
 	'viewport': function(){
@@ -62,16 +87,6 @@ Template.Viewport.helpers({
 		}
 	},
 
-	'tileClass': function(){
-		switch(this.type){
-			case 'i':
-				return "island";
-			case '.':
-				return "ground";
-			default:
-				return "";
-		}
-	},
 	'objClass': function(){
 		return "";
 	},
@@ -90,8 +105,23 @@ Template.Player.helpers({
 	}
 });
 
-Meteor.startup(function () {
-	Meteor.setInterval(function(){
+Template.Obj.helpers({
+	'objClass': function(){
+		switch(this.type){
+			case OBJS_TYPES.MERCHANT:
+				return "merchant";
 
-	}, 2000);
+			default:
+				return "";
+		}
+	},
+	'objLastMovement': function(){
+		return this.lastCommand + " " + this.lastCommand + "-tmp";
+	},
+
+	'leftXY': function(){ return this.left * TILE_WIDTH; },
+	'topXY': function(){ return this.top * TILE_HEIGHT; },
+});
+
+Meteor.startup(function(){
 });

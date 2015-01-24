@@ -1,7 +1,7 @@
 @tile-width: 64px;
 @tile-height: 64px;
 
-@viewport-width: 400px;
+@viewport-width: 800px;
 @viewport-height: 400px;
 
 @main-water-color: #1fb3ff;
@@ -14,7 +14,7 @@
 	width: @viewport-width;
 	height: @viewport-height;
 
-	background-color: red;
+	background-color: @main-water-color;
 
 	overflow: hidden;
 }
@@ -39,12 +39,98 @@
 
 	z-index: 0;
 
-	&.water {
-		background-color: @main-water-color;
+	&.water { background-color: @main-water-color; }
+	
+	&.island {
+		background-image: url("/mapa/wyspa_z_palma_bez_fal.png");
+		div.animation {
+			background-image: url("/mapa/wyspa_z_palma_tylko_fala.png");
+		}
 	}
 
-	&.island {
-		background-image: url("/island.png");
+	&.stones1 {
+		background-image: url("/mapa/stones_1.png");
+		div.animation {
+			background-image: url("/mapa/stones_1_tylko_fala.png");
+		}
+	}
+
+	&.stones2 {
+		background-image: url("/mapa/stones_2.png");
+		div.animation {
+			background-image: url("/mapa/stones_2_tylko_fala.png");
+		}
+	}
+	&.stones3 {
+		background-image: url("/mapa/stones_3.png");
+		div.animation {
+			background-image: url("/mapa/stones_3_tylko_fala.png");
+		}
+	}
+
+	&.siren {
+		background-image: url("/mapa/siren_bez_fal.png");
+		div.animation {
+			background-image: url("/mapa/siren_tylko_fala.png");
+		}
+	}
+
+	div.animation{
+		position: absolute;
+		top: 0px;
+		left: 0px;
+		width: @tile-width;
+		height: @tile-width;
+
+		z-index: 1;
+
+		@speed: 3s;
+
+		animation: wavesframes ease-in-out @speed;
+		animation-iteration-count: infinite;
+		transform-origin: 50% 50%;
+		-webkit-animation: wavesframes ease-in-out @speed;
+		-webkit-animation-iteration-count: infinite;
+		-webkit-transform-origin: 50% 50%;
+		-moz-animation: wavesframes ease-in-out @speed;
+		-moz-animation-iteration-count: infinite;
+		-moz-transform-origin: 50% 50%;
+		-o-animation: wavesframes ease-in-out @speed;
+		-o-animation-iteration-count: infinite;
+		-o-transform-origin: 50% 50%;
+		-ms-animation: wavesframes ease-in-out @speed;
+		-ms-animation-iteration-count: infinite;
+		-ms-transform-origin: 50% 50%;
+	}
+
+	@keyframes wavesframes{
+		0% { opacity:1; }
+		50% { opacity:0.25; }
+		100% {  opacity:1; }
+	}
+
+	@-moz-keyframes wavesframes{
+		0% { opacity:1; }
+		50% { opacity:0.25; }
+		100% {  opacity:1; }
+	}
+
+	@-webkit-keyframes wavesframes {
+		0% { opacity:1; }
+		50% { opacity:0.25; }
+		100% {  opacity:1; }
+	}
+
+	@-o-keyframes wavesframes {
+		0% { opacity:1; }
+		50% { opacity:0.25; }
+		100% {  opacity:1; }
+	}
+
+	@-ms-keyframes wavesframes {
+		0% { opacity:1; }
+		50% { opacity:0.25; }
+		100% {  opacity:1; }
 	}
 }
 
@@ -63,7 +149,17 @@
 
 	font-size: 20px;
 
-	background-image: url("/pirate_ship.png");
+	&.player {
+		background-image: url("/obiekty/ship.png");
+
+		left: @viewport-width / 2 - @tile-width / 2;
+		top: @viewport-height / 2 - @tile-height / 2;
+	}
+
+	&.merchant {
+		background-image: url("/obiekty/ship_2.png");
+		transition: top 2s, left 2s, transform 2s;
+	}
 
 	transform: rotate(0deg);
 

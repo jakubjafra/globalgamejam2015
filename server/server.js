@@ -1,14 +1,25 @@
+/*
+i - island
+s - stone
+*/
+
 var mapDesc = [
-	"......",
-	"......",
-	"..i...",
-	"......",
-	"......",
-	"....i."
+	"....................",
+	"....................",
+	".....1.........i....",
+	".............3......",
+	"..2...............1.",
+	"........s...........",
+	"....................",
+	"...i.........1......",
+	"........i...........",
+	"....................",
 ];
 
 var objsDesc = [
-	new Player(3, 3)
+	new Merchant(3, 3),
+	new Player(5, 5),
+	new Merchant(8, 8)
 ];
 
 function isOrder(what){
@@ -19,9 +30,29 @@ function isOrder(what){
 	return false;
 }
 
-function movePlayer(what){
+var directions = ["top", "left", "bottom", "right"];
+
+function doOrder(objectId, what){
+	switch(what){
+		case "top":
+		case "left":
+		case "bottom":
+		case "right":
+			moveObject(objectId, what);
+			break;
+
+		case "fire":
+			console.log("PUF!");
+			break;
+
+		default:
+			break;
+	}
+}
+
+function moveObject(objectId, what){
 	var change = {};
-	var playerState = MapObjects.find({type: OBJS_TYPES.PLAYER});
+	var playerState = MapObjects.findOne({_id: objectId});
 
 	switch(what){
 		case "top":
@@ -48,12 +79,27 @@ function movePlayer(what){
 			return;
 	}
 
-	// TODO: sprawdź co to za tile
+	var tile = MapTiles.findOne({top: playerState.top, left: playerState.left});
+	if(tile == undefined || tile.type !== ".")
+		return;
 
 	change.$set = {lastCommand: what};
 
-	MapObjects.update({type: OBJS_TYPES.PLAYER}, change);
-	console.log("player moved " + what);
+	MapObjects.update({_id: objectId}, change);
+}
+
+function movePlayer(what){
+	doOrder(MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id, what);
+}
+
+function updateAgents(){
+	MapObjects.find({type: {$ne: OBJS_TYPES.PLAYER}}).fetch().forEach(function(obj){
+		var dirId = Math.floor(Math.random() * directions.length * 2);
+		if(dirId >= 4)
+			return;
+
+		moveObject(obj._id, directions[dirId]);
+	});
 }
 
 Meteor.startup(function(){
@@ -83,6 +129,7 @@ Meteor.startup(function(){
 			return;
 		}
 
+		updateAgents();
 		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION}});
 
 		var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
