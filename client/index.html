@@ -1,0 +1,50 @@
+<head>
+</head>
+
+<body>
+	{{> Chat}}
+	{{> Viewport}}
+</body>
+
+<template name="Chat">
+	<div id="chat">
+		<div class="list">
+			{{#each chatList}}
+				<div>
+					{{ what }}
+				</div>
+			{{/each}}
+		</div>
+		<input id="chat_input" type="text" placeholder="chat input" />
+		timeleft: {{ turnTimeleft }}
+		<div class="list">
+			{{#each commandsList}}
+				<div>
+					{{ what }} ({{ seq }})
+				</div>
+			{{/each}}
+		</div>
+	</div>
+</template>
+
+<template name="Viewport">
+	<div id="viewport" style="width: {{ viewport.width }}px; height: {{ viewport.height }}px;">
+		{{> Player}}
+
+		<div id="map" style="top: {{ viewportOffsetTop }}px; left: {{ viewportOffsetLeft }}px; width: {{ viewport.width }}px; height: {{ viewport.height }}px;">
+			{{#each mapTilesList}}
+				<div class="map_tile {{ tileClass }}" style="top: {{ topXY }}px; left: {{ leftXY }}px;">
+				</div>
+			{{/each}}
+			{{#each mapObjsList}}
+				<div class="map_object {{ objClass }} {{ objLastMovement }}" style="top: 168px; left: 168px; {{ movementTransition }}">
+				</div>
+			{{/each}}
+		</div>
+	</div>
+</template>
+
+<template name="Player">
+	<div class="map_object {{ objClass }} {{ objLastMovement }}" style="top: 168px; left: 168px; {{ movementTransition }}">
+	</div>
+</template>
