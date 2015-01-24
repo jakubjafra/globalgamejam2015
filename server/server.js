@@ -1,25 +1,26 @@
 /*
 i - island
-s - stone
+s - siren
+d,f,g - stones(1, 2, 3)
+hexcode - big island
 */
 
 var mapDesc = [
-	"....................",
-	"....................",
-	".....1.........i....",
-	".............3......",
-	"..2...............1.",
+	".012................",
+	".3456..........i....",
+	".789A........g......",
+	".BCDE..............d",
 	"........s...........",
 	"....................",
-	"...i.........1......",
+	"...i.........d......",
 	"........i...........",
 	"....................",
 ];
 
 var objsDesc = [
-	new Merchant(3, 3, MERCHANTS.NORMAL),
+	//new Merchant(3, 3, MERCHANTS.NORMAL),
 	new Player(5, 5),
-	new Merchant(3, 4, MERCHANTS.AGGRESIVE)
+	new Merchant(8, 8, MERCHANTS.AGGRESIVE)
 ];
 
 function isOrder(what){
@@ -80,8 +81,11 @@ function moveObject(objectId, what){
 	}
 
 	var tile = MapTiles.findOne({top: playerState.top, left: playerState.left});
-	if(tile == undefined || tile.type !== ".")
+	if(tile == undefined || (tile.type !== "." && tile.type !== "2")){
+		console.log(tile);
+		console.log("refused");
 		return;
+	}
 
 	change.$set = {lastCommand: what};
 
@@ -109,8 +113,18 @@ function playerRandFire(objectId){
 		]
 	}).fetch();
 
-	var choosed = Math.floor(Math.random() * objectInRange.length);
+	if(objectInRange.length == 0)
+		return;
+
+	var choosedId = Math.floor(Math.random() * objectInRange.length);
+	var choosed = objectInRange[choosedId];
+
 	console.log("player fired at " + choosed._id);
+	makeFireOn(choosed._id);
+}
+
+function makeFireOn(objId){
+	MapObjects.update({_id: objId}, {$set: {currTurnState: OBJS_STATE.HITTED}});
 }
 
 function fireObjectAt(objectId, whatId){
@@ -118,6 +132,8 @@ function fireObjectAt(objectId, whatId){
 		console.log(objectId + " fired at player");
 	else
 		console.log(objectId + " fired at " + whatId);
+
+	makeFireOn(whatId);
 }
 
 function randDirection(){
@@ -149,6 +165,40 @@ function isPlayerInFireRange(object){
 
 	if(objectInRange == undefined)
 		return false;
+	else{
+		console.log(objectInRange);
+		return objectInRange._id;
+	}
+}
+
+function isPlayerInDirectAttackRange(object){
+	var playerId = MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id;
+
+	var minTop = object.top - 1;
+	var maxTop = object.top + 1;
+	var minLeft = object.left - 1;
+	var maxLeft = object.left + 1;
+
+	var objectInRange = MapObjects.findOne({_id: playerId,
+		$or: [
+			{ top: {$eq: minTop} },
+			{ top: {$eq: maxTop} },
+			{ left: {$eq: minLeft} },
+			{ left: {$eq: maxLeft} }
+		]
+	});
+
+	console.log({_id: playerId,
+		$or: [
+			{ top: {$eq: minTop} },
+			{ top: {$eq: maxTop} },
+			{ left: {$eq: minLeft} },
+			{ left: {$eq: maxLeft} }
+		]
+	});
+
+	if(objectInRange == undefined)
+		return false;
 	else
 		return objectInRange._id;
 }
@@ -172,7 +222,8 @@ function updateAgents(){
 						fireObjectAt(obj._id, id);
 					} else
 						moveObject(obj._id, randDirection());
-				}
+				} else
+					moveObject(obj._id, randDirection());
 				break;
 
 			default:
@@ -207,6 +258,8 @@ Meteor.startup(function(){
 			CurrentTurn.update({t: CURR_TURN.COUNTER}, {$inc: {timeleft: -1}});
 			return;
 		}
+
+		MapObjects.update({}, {$set: {currTurnState: OBJS_STATE.NORMAL}}, {multi: true});
 
 		updateAgents();
 		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION}});

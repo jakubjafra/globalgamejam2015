@@ -33,14 +33,36 @@ Template.Tile.helpers({
 	'leftXY': function(){ return this.left * TILE_WIDTH; },
 	'topXY': function(){ return this.top * TILE_HEIGHT; },
 
+	'isNotMare': function(){
+		return this.type != '.';
+	},
+	'isMerchantIsland': function(){
+		return this.type == '0';
+	},
+
 	'tileClass': function(){
 		switch(this.type){
 			case 'i': return "island";
-			case '1': return "stones1";
-			case '2': return "stones2";
-			case '3': return "stones3";
+			case 'd': return "stones1";
+			case 'f': return "stones2";
+			case 'g': return "stones3";
 			case 's': return "siren";
 			case '.': return "ground";
+			case '0': return "bigisland0";
+			case '1': return "bigisland1";
+			case '2': return "bigisland2";
+			case '3': return "bigisland3";
+			case '4': return "bigisland4";
+			case '5': return "bigisland5";
+			case '6': return "bigisland6";
+			case '7': return "bigisland7";
+			case '8': return "bigisland8";
+			case '9': return "bigisland9";
+			case 'A': return "bigislandA";
+			case 'B': return "bigislandB";
+			case 'C': return "bigislandC";
+			case 'D': return "bigislandD";
+			case 'E': return "bigislandE";
 			default: return "";
 		}
 	}
@@ -48,7 +70,8 @@ Template.Tile.helpers({
 
 Template.Tile.rendered = function(){
 	Meteor.setTimeout(_.bind(function(){
-			this.findAll(".map_tile > div")[0].className += "animation";
+			if(this.findAll(".map_tile > div").length)
+				this.findAll(".map_tile > div")[0].className += "animation";
 		}, this),
 		Math.floor(Math.random() * 2000)
 	);
@@ -102,6 +125,9 @@ Template.Player.helpers({
 	'objLastMovement': function(){
 		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
 		return player.lastCommand + " " + player.lastCommand + "-tmp";
+	},
+	'id': function(){
+		return MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id;
 	}
 });
 
@@ -115,13 +141,36 @@ Template.Obj.helpers({
 				return "";
 		}
 	},
+	'id': function(){
+		return this._id;
+	},
 	'objLastMovement': function(){
 		return this.lastCommand + " " + this.lastCommand + "-tmp";
 	},
 
 	'leftXY': function(){ return this.left * TILE_WIDTH; },
-	'topXY': function(){ return this.top * TILE_HEIGHT; },
+	'topXY': function(){ return this.top * TILE_HEIGHT; }
 });
 
 Meteor.startup(function(){
+	MapObjects.find({}).observeChanges({
+		changed: function(id, fields){
+			if(fields.currTurnState != undefined){
+				console.log(fields);
+				console.log(id);
+				switch(fields.currTurnState){
+					case OBJS_STATE.NORMAL:
+						$("#"+id+" > img").removeClass("on_hitted");
+						break;
+
+					case OBJS_STATE.HITTED:
+						$("#"+id+" > img").addClass("on_hitted");
+						break;
+
+					default:
+						break;
+				}
+			}
+		}
+	})
 });

@@ -40,7 +40,12 @@ MERCHANTS = {
 	STUPID: 0,
 	NORMAL: 1,
 	AGGRESIVE: 2
-}
+};
+
+OBJS_STATE = {
+	NORMAL: 0,
+	HITTED: 1
+};
 
 Obj = function(x, y, type){
 	this.left = x;
@@ -48,6 +53,8 @@ Obj = function(x, y, type){
 	this.type = type;
 
 	this.lastCommand = "top";
+
+	this.currTurnState = OBJS_STATE.NORMAL;
 }
 
 Player = function(x, y){

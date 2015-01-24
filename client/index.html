@@ -31,7 +31,7 @@
 	<div id="viewport" style="width: {{ viewport.width }}px; height: {{ viewport.height }}px;">
 		{{> Player}}
 
-		<div id="map" style="top: {{ viewportOffsetTop }}px; left: {{ viewportOffsetLeft }}px; width: {{ viewport.width }}px; height: {{ viewport.height }}px;">
+		<div id="map" style="top: {{ viewportOffsetTop }}px; left: {{ viewportOffsetLeft }}px;">
 			{{#each mapTilesList}}
 				{{> Tile}}
 			{{/each}}
@@ -43,17 +43,24 @@
 </template>
 
 <template name="Player">
-	<div class="map_object player {{ objLastMovement }}" style="{{ movementTransition }}">
+	<div id="{{ id }}" class="map_object player {{ objLastMovement }}" style="{{ movementTransition }}">
+		<img class="" src="/animacje/single_shoot.png" style="display: none;">
 	</div>
 </template>
 
 <template name="Obj">
-	<div class="map_object {{ objClass }} {{ objLastMovement }}" style="top: {{ topXY }}px; left: {{ leftXY }}px; {{ movementTransition }}">
+	<div id="{{ id }}" class="map_object {{ objClass }} {{ objLastMovement }}" style="top: {{ topXY }}px; left: {{ leftXY }}px; {{ movementTransition }}">
+		<img class="" src="/animacje/single_shoot.png" style="display: none;">
 	</div>
 </template>
 
 <template name="Tile">
-	<div class="map_tile {{ tileClass }}" style="top: {{ topXY }}px; left: {{ leftXY }}px;">
-		<div></div>
-	</div>
+	{{#if isNotMare}}
+		<div class="map_tile {{ tileClass }}" style="top: {{ topXY }}px; left: {{ leftXY }}px;">
+			{{#if isMerchantIsland}}
+				<img src="/mapa/wyspa_kupiecka_przezroczysta_bez_fal.png" style="display: none">
+			{{/if}}
+			<div></div>
+		</div>
+	{{/if}}
 </template>
