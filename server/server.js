@@ -17,9 +17,9 @@ var mapDesc = [
 ];
 
 var objsDesc = [
-	new Merchant(3, 3),
+	new Merchant(3, 3, MERCHANTS.NORMAL),
 	new Player(5, 5),
-	new Merchant(8, 8)
+	new Merchant(3, 4, MERCHANTS.AGGRESIVE)
 ];
 
 function isOrder(what){
@@ -42,7 +42,7 @@ function doOrder(objectId, what){
 			break;
 
 		case "fire":
-			console.log("PUF!");
+			playerRandFire(objectId);
 			break;
 
 		default:
@@ -88,17 +88,96 @@ function moveObject(objectId, what){
 	MapObjects.update({_id: objectId}, change);
 }
 
-function movePlayer(what){
-	doOrder(MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id, what);
+function playerRandFire(objectId){
+	var objState = MapObjects.findOne({_id: objectId, type: {$ne: 0}});
+	if(objState == undefined)
+		return;
+
+	var minTop = objState.top - 2;
+	var maxTop = objState.top + 2;
+	var minLeft = objState.left - 2;
+	var maxLeft = objState.left + 2;
+
+	var objectInRange = MapObjects.find({_id: {$ne: objectId},
+		$and: [
+			{ top: {$gte: minTop} },
+			{ top: {$lte: maxTop} }
+		], 
+		$and: [
+			{ left: {$gte: minLeft} },
+			{ left: {$lte: maxLeft} }
+		]
+	}).fetch();
+
+	var choosed = Math.floor(Math.random() * objectInRange.length);
+	console.log("player fired at " + choosed._id);
+}
+
+function fireObjectAt(objectId, whatId){
+	if(whatId == MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id)
+		console.log(objectId + " fired at player");
+	else
+		console.log(objectId + " fired at " + whatId);
+}
+
+function randDirection(){
+	var dirId = Math.floor(Math.random() * directions.length * 2);
+	if(dirId >= 4)
+		return "";
+	else
+		return directions[dirId];
+}
+
+function isPlayerInFireRange(object){
+	var playerId = MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id;
+
+	var minTop = object.top - 2;
+	var maxTop = object.top + 2;
+	var minLeft = object.left - 2;
+	var maxLeft = object.left + 2;
+
+	var objectInRange = MapObjects.findOne({_id: playerId,
+		$and: [
+			{ top: {$gte: minTop} },
+			{ top: {$lte: maxTop} }
+		], 
+		$and: [
+			{ left: {$gte: minLeft} },
+			{ left: {$lte: maxLeft} }
+		]
+	});
+
+	if(objectInRange == undefined)
+		return false;
+	else
+		return objectInRange._id;
+}
+
+function willAttack(obj){
+	return Math.floor(Math.random() * 2) == 1;
 }
 
 function updateAgents(){
 	MapObjects.find({type: {$ne: OBJS_TYPES.PLAYER}}).fetch().forEach(function(obj){
-		var dirId = Math.floor(Math.random() * directions.length * 2);
-		if(dirId >= 4)
-			return;
+		switch(obj.behaviour){
+			case MERCHANTS.STUPID:
+				moveObject(obj._id, randDirection());
+				break;
 
-		moveObject(obj._id, directions[dirId]);
+			case MERCHANTS.NORMAL:
+			case MERCHANTS.AGGRESIVE:
+				var id = false;
+				if((id = isPlayerInFireRange(obj)) != false){
+					if(willAttack(obj)){
+						fireObjectAt(obj._id, id);
+					} else
+						moveObject(obj._id, randDirection());
+				}
+				break;
+
+			default:
+				return;
+		}
 	});
 }
 
@@ -139,7 +218,7 @@ Meteor.startup(function(){
 
 		CurrentTurnOrders.remove({});
 
-		movePlayer(order.what);
+		doOrder(MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id, order.what);
 	}, 1000);
 
 	Meteor.methods({

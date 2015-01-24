@@ -36,6 +36,12 @@ OBJS_TYPES = {
 	MERCHANT: 2
 };
 
+MERCHANTS = {
+	STUPID: 0,
+	NORMAL: 1,
+	AGGRESIVE: 2
+}
+
 Obj = function(x, y, type){
 	this.left = x;
 	this.top = y;
@@ -48,6 +54,8 @@ Player = function(x, y){
 	return new Obj(x, y, OBJS_TYPES.PLAYER);
 }
 
-Merchant = function(x, y){
-	return new Obj(x, y, OBJS_TYPES.MERCHANT);
+Merchant = function(x, y, t){
+	var obj = new Obj(x, y, OBJS_TYPES.MERCHANT);
+	obj.behaviour = t;
+	return obj;
 }
