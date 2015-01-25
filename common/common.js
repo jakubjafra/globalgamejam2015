@@ -10,7 +10,7 @@ CURR_TURN = {
 CurrentTurnOrders = new Mongo.Collection("current_turn_orders");
 
 TURN = {
-	DURATION: 2,
+	DURATION: 10,
 	STATE_MAP: 1,
 	STATE_COMBAT: 2
 };
@@ -20,7 +20,10 @@ ORDERS = [
 	'left',
 	'right',
 	'bottom',
-	'fire'
+	'fire',
+	'attack',
+	'defense',
+	'run'
 ];
 
 MapTiles = new Mongo.Collection("map_tiles");
@@ -41,8 +44,8 @@ OBJS_TYPES = {
 
 MERCHANTS = {
 	STUPID: 0,
-	NORMAL: 1,
-	AGGRESIVE: 2
+	AGGRESIVE: 1,
+	NORMAL: 2
 };
 
 OBJS_STATE = {
@@ -54,6 +57,11 @@ Obj = function(x, y, type){
 	this.left = x;
 	this.top = y;
 	this.type = type;
+
+	this.hp = {
+		white: 10,
+		black: 10
+	};
 
 	this.lastCommand = "top";
 
@@ -67,5 +75,9 @@ Player = function(x, y){
 Merchant = function(x, y, t){
 	var obj = new Obj(x, y, OBJS_TYPES.MERCHANT);
 	obj.behaviour = t;
+	obj.hp = {
+		white: 2,
+		black: 2
+	};
 	return obj;
 }

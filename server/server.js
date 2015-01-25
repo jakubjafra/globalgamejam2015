@@ -141,7 +141,25 @@ function playerRandFire(objectId){
 }
 
 function makeFireOn(objId){
-	MapObjects.update({_id: objId}, {$set: {currTurnState: OBJS_STATE.HITTED}});
+	var target = MapObjects.findOne({_id: objId});
+	if(target == undefined)
+		return;
+
+	var possibilites = [];
+	if(target.hp.white > 0)
+		possibilites.push('hp.white');
+	if(target.hp.black > 0)
+		possibilites.push('hp.black');
+
+	var descreaseHpType = possibilites[Math.floor(possibilites.length * Math.random())];
+
+	if(descreaseHpType == 'hp.white')
+		MapObjects.update({_id: objId}, {$set: {currTurnState: OBJS_STATE.HITTED}, $inc: {'hp.white': -1}});
+	else
+		MapObjects.update({_id: objId}, {$set: {currTurnState: OBJS_STATE.HITTED}, $inc: {'hp.black': -1}});
+
+	MapObjects.update({$and: [{_id: objId}, {'hp.white': {$lte: 0}}]}, {$set: {behaviour: MERCHANTS.STUPID}});
+	MapObjects.remove({$and: [{'hp.white': {$lte: 0}}, {'hp.black': {$lte: 0}}]});
 }
 
 function fireObjectAt(objectId, whatId){
@@ -211,8 +229,8 @@ function isPlayerInDirectAttackRange(object){
 		return objectInRange._id;
 }
 
-function willAttack(obj){
-	return Math.floor(Math.random() * 2) == 1;
+function willAttack(obj, type){
+	return Math.floor(Math.random() * (MERCHANTS.NORMAL + 1)) == 1;
 }
 
 function updateAgents(){
@@ -226,7 +244,7 @@ function updateAgents(){
 			case MERCHANTS.AGGRESIVE:
 				var id = false;
 				if((id = isPlayerInFireRange(obj)) != false){
-					if(willAttack(obj)){
+					if(willAttack(obj, obj.behaviour)){
 						fireObjectAt(obj._id, id);
 					} else
 						moveObject(obj._id, randDirection());
@@ -238,6 +256,113 @@ function updateAgents(){
 				return;
 		}
 	});
+}
+
+var attackModifier = {
+	"attack": 1.5,
+	"defense": 0.5,
+	"run": 0.25
+};
+
+var defenseModifier = {
+	"attack": 0.5,
+	"defense": 1.5,
+	"run": 0.5
+};
+
+function getEnemyOrder(enemy){
+	switch(enemy.behaviour){
+		case MERCHANTS.STUPID:
+			return "run";
+
+		case MERCHANTS.NORMAL:
+			return "defense";
+
+		case MERCHANTS.AGGRESIVE:
+			return "attack";
+	}
+}
+
+function getLosts(factor){
+	if(factor < 1.5)
+		return 0;
+	else if(factor < 2)
+		return 1;
+	else if(factor < 3)
+		return 2;
+	else
+		return 3;
+}
+
+function updateCombat(order){
+	if(order == "")
+		order = "defense";
+
+	var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+	var enemy = MapObjects.findOne({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
+
+	var playerOrder = order;
+	var enemyOrder = getEnemyOrder(enemy);
+
+	var playerBaseAttack = player.hp.white * 2 + player.hp.black;
+	var enemyBaseAttack = enemy.hp.white * 2 + enemy.hp.black;
+
+	var playerBaseDefense = player.hp.white + player.hp.black * 2;
+	var enemyBaseDefense = enemy.hp.white + enemy.hp.black * 2;
+
+	var playerAttack = playerBaseAttack * attackModifier[playerOrder];
+	var enemyAttack = enemyBaseAttack * attackModifier[enemyOrder];
+
+	var playerDefense = playerBaseDefense * defenseModifier[playerOrder];
+	var enemyDefense = enemyBaseDefense * defenseModifier[enemyOrder];
+
+	var playerHPLost = getLosts(enemyAttack / playerDefense);
+	var enemyHPLost = getLosts(playerAttack / enemyDefense);
+
+	console.log("you choosed " + playerOrder);
+	console.log("they choosed " + enemyOrder);
+
+	if(playerHPLost >= (player.hp.black + player.hp.white)){
+		console.log("YOU LOST!");
+	} else{
+		var playerBlackLosts = 0;
+		var playerWhiteLosts = 0;
+		if(player.hp.black > playerHPLost)
+			playerBlackLosts = playerHPLost;
+		else if(player.hp.black == 0)
+			playerWhiteLosts = playerHPLost;
+		else{
+			playerBlackLosts = player.hp.black;
+			playerHPLost -= player.hp.black;
+			playerWhiteLosts = playerHPLost;
+		}
+
+		console.log("after attack you lost " + playerBlackLosts + " czarnych " + playerWhiteLosts + " białych");
+
+		MapObjects.update({type: OBJS_TYPES.PLAYER}, {$inc: {'hp.black': -playerBlackLosts, 'hp.white': -playerWhiteLosts}});
+	}
+
+	if(enemyHPLost >= (enemy.hp.black + enemy.hp.white)){
+		console.log("they died! you have won!");
+		MapObjects.remove({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
+		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
+	} else{
+		var enemyBlackLosts = 0;
+		var enemyWhiteLosts = 0;
+		if(enemy.hp.black > enemyHPLost)
+			enemyBlackLosts = enemyHPLost;
+		else if(enemy.hp.black == 0)
+			enemyWhiteLosts = enemyHPLost;
+		else{
+			enemyBlackLosts = enemy.hp.black;
+			enemyHPLost -= enemyBlackLosts;
+			enemyWhiteLosts = enemyHPLost;
+		}
+
+		console.log("after attack they lost " + enemyBlackLosts + " czarnych " + enemyWhiteLosts + " białych");
+
+		MapObjects.update({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left}, {$inc: {'hp.black': -enemyBlackLosts, 'hp.white': -enemyWhiteLosts}});
+	}
 }
 
 Meteor.startup(function(){
@@ -275,24 +400,33 @@ Meteor.startup(function(){
 
 		switch(state.value){
 			case TURN.STATE_MAP:
-				// updateAgents();
+				updateAgents();
+
+				var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
+
+				if(order == undefined)
+					return;
+
+				CurrentTurnOrders.remove({});
+
+				doOrder(MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id, order.what, state.value);
 				break;
 
 			case TURN.STATE_COMBAT:
+				var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
+
+				CurrentTurnOrders.remove({});
+
+				if(order != undefined && order.what != undefined)
+					updateCombat(order.what);
+				else
+					updateCombat("");
+				
 				break;
 
 			default:
 				break;
 		}
-
-		var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
-
-		if(order == undefined)
-			return;
-
-		CurrentTurnOrders.remove({});
-
-		doOrder(MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id, order.what, state.value);
 	}, 1000);
 
 	Meteor.methods({
