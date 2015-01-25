@@ -18,7 +18,7 @@
 			{{/each}}
 		</div>
 	</div>
-	<input id="chat_input" type="text" placeholder="chat input" focused />
+	<input id="chat_input" type="text" placeholder="AHOJ! SCREAM PIRATE!" focused />
 	<div id="helper_box">
 		<div id="timeleft">
 			{{ turnTimeleft }}
@@ -31,7 +31,7 @@
 			{{/each}}
 		</div>
 		<div id="commands">
-			<b>SHEEP CTRL:</b> UP / DOWN / RIGHT / LEFT / FIRE <small>(when enemy is close)</small>
+			<b>SHIP CONTROL:</b> <span title="Move north!">W</span> / <span title="Move south!">S</span> / <span title="Move west!">A</span> / <span title="Move east!">D</span> / FIRE <small>(when eneme be close)</small>
 			<br>
 			<b>COMBAT:</b> ATTACK / DEFENSE / RUN
 		</div>
@@ -82,7 +82,8 @@
 <template name="GameLost">
 	{{#if isGameOverMode}}
 		<div id="background">
-			YOU LOST!
+			<div id="lose_box">
+			</div>
 		</div>
 	{{/if}}
 </template>

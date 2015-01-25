@@ -11,7 +11,7 @@ CURR_TURN = {
 CurrentTurnOrders = new Mongo.Collection("current_turn_orders");
 
 TURN = {
-	DURATION: 2,
+	DURATION: 5,
 	DURATION_COMBAT: 10,
 	STATE_MAP: 1,
 	STATE_COMBAT: 2,

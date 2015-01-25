@@ -39,8 +39,23 @@ var mapDesc = [
 var objsDesc = [
 	//new Merchant(3, 3, MERCHANTS.NORMAL),
 	new Player(7, 8),
-	new Merchant(8, 8, MERCHANTS.AGGRESIVE)
+	new Merchant(8, 8, MERCHANTS.NORMAL),
+	new Merchant(0, 0, MERCHANTS.AGGRESIVE),
+	new Merchant(1, 6, MERCHANTS.AGGRESIVE),
+	new Merchant(5, 4, MERCHANTS.NORMAL),
+	new Merchant(4, 7, MERCHANTS.STUPID),
+	new Merchant(2, 0, MERCHANTS.AGGRESIVE),
+	new Merchant(18, 8, MERCHANTS.NORMAL),
+	new Merchant(8, 0, MERCHANTS.STUPID),
+	new Merchant(23, 8, MERCHANTS.NORMAL),
+	new Merchant(37, 1, MERCHANTS.AGGRESIVE),
+	new Merchant(13, 9, MERCHANTS.NORMAL),
+	new Merchant(30, 8, MERCHANTS.AGGRESIVE),
+	new Merchant(2, 0, MERCHANTS.STUPID),
+	new Merchant(17, 1, MERCHANTS.NORMAL),
+	new Merchant(29, 3, MERCHANTS.AGGRESIVE)
 ];
+
 
 function isOrder(what){
 	for(var i = 0; i < ORDERS.length; i++)
@@ -48,6 +63,31 @@ function isOrder(what){
 			return true;
 
 	return false;
+}
+
+function translateOrders(input){
+	switch(input){
+		case "w":
+		case "north":
+			return "top";
+		case "s":
+		case "south":
+			return "bottom";
+		case "a":
+		case "west":
+			return "left";
+		case "d":
+		case "east":
+			return "right";
+		case "run":
+			return "run";
+		case "attack":
+			return "attack";
+		case "defense":
+			return "defense";
+		case "fire":
+			return "fire";
+	}
 }
 
 var directions = ["top", "left", "bottom", "right"];
@@ -113,6 +153,7 @@ function moveObject(objectId, what){
 
 	var tile = MapTiles.findOne({top: playerState.top, left: playerState.left});
 	if(tile == undefined || (tile.type !== "." && tile.type !== "p" && tile.type !== "b" && tile.type !== "n" && tile.type !== "m" && tile.type !== "1" && tile.type !== "W")){
+		console.log(playerState);
 		console.log("refused movement");
 		return false;
 	}
@@ -120,7 +161,7 @@ function moveObject(objectId, what){
 
 	var objs = MapObjects.findOne({top: playerState.top, left: playerState.left});
 
-	if(objs != undefined){
+	if(objs != undefined && (playerState.type == OBJS_TYPES.PLAYER || objs.type == OBJS_TYPES.PLAYER)){
 		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_COMBAT}});
 		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION_COMBAT}});
 	}
@@ -171,7 +212,10 @@ function playerRandFire(objectId){
 	makeFireOn(choosed._id);
 }
 
-function makeFireOn(objId){
+function makeFireOn(objId, isPlayer){
+	if(isPlayer === undefined)
+		isPlayer = false;
+
 	var target = MapObjects.findOne({_id: objId});
 	if(target == undefined)
 		return;
@@ -190,7 +234,12 @@ function makeFireOn(objId){
 		MapObjects.update({_id: objId}, {$set: {currTurnState: OBJS_STATE.HITTED}, $inc: {'hp.black': -1}});
 
 	MapObjects.update({$and: [{_id: objId}, {'hp.white': {$lte: 0}}]}, {$set: {behaviour: MERCHANTS.STUPID}});
-	MapObjects.remove({$and: [{'hp.white': {$lte: 0}}, {'hp.black': {$lte: 0}}]});
+	var x = MapObjects.remove({$and: [{'hp.white': {$lte: 0}}, {'hp.black': {$lte: 0}}]});
+
+	if(x == 1 && isPlayer == true){
+		console.log("YOU LOST!");
+		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_GAME_LOST}});
+	}
 }
 
 function fireObjectAt(objectId, whatId){
@@ -199,7 +248,7 @@ function fireObjectAt(objectId, whatId){
 	else
 		console.log(objectId + " fired at " + whatId);
 
-	makeFireOn(whatId);
+	makeFireOn(whatId, whatId == MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id);
 }
 
 function randDirection(){
@@ -434,27 +483,29 @@ function updateCombat(order){
 	}
 }
 
+function makeMap(map, objs){
+	Chat.remove({});
+	MapTiles.remove({});
+	MapObjects.remove({});
+	CurrentTurn.remove({});
+
+	map.forEach(function(elem, indexY){
+		for(var indexX = 0; indexX < elem.length; indexX++){
+			MapTiles.insert(new Tile(indexX, indexY, elem[indexX]));
+		}
+	});
+
+	objs.forEach(function(elem){
+		MapObjects.insert(elem);
+	});
+
+	CurrentTurn.insert({t: CURR_TURN.COUNTER, timeleft: TURN.DURATION});
+	CurrentTurn.insert({t: CURR_TURN.STATE, value: TURN.STATE_MAP});
+	CurrentTurn.insert({t: CURR_TURN.COMBAT_LAST_ORDERS, player: "", enemy: ""});
+}
+
 Meteor.startup(function(){
-	(function makeMap(map, objs){
-		Chat.remove({});
-		MapTiles.remove({});
-		MapObjects.remove({});
-		CurrentTurn.remove({});
-
-		map.forEach(function(elem, indexY){
-			for(var indexX = 0; indexX < elem.length; indexX++){
-				MapTiles.insert(new Tile(indexX, indexY, elem[indexX]));
-			}
-		});
-
-		objs.forEach(function(elem){
-			MapObjects.insert(elem);
-		});
-
-		CurrentTurn.insert({t: CURR_TURN.COUNTER, timeleft: TURN.DURATION});
-		CurrentTurn.insert({t: CURR_TURN.STATE, value: TURN.STATE_MAP});
-		CurrentTurn.insert({t: CURR_TURN.COMBAT_LAST_ORDERS, player: "", enemy: ""});
-	})(mapDesc, objsDesc);
+	makeMap(mapDesc, objsDesc);
 
 	Meteor.setInterval(function(){
 		var turn = CurrentTurn.findOne({t: CURR_TURN.COUNTER});
@@ -500,6 +551,10 @@ Meteor.startup(function(){
 				CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
 				break;
 
+			case TURN.STATE_GAME_LOST:
+				// makeMap(mapDesc, objsDesc);
+				break;
+
 			default:
 				break;
 		}
@@ -509,6 +564,8 @@ Meteor.startup(function(){
 		'say': function(what){
 			var seq = Chat.find({}).count();
 			Chat.insert({ what: what, seq: seq });
+
+			what = translateOrders(what);
 
 			if(isOrder(what))
 				CurrentTurnOrders.upsert({what: what}, {$inc: {seq: 1}});
