@@ -62,6 +62,9 @@ Template.Tile.helpers({
 			case '1': return "bigisland1";
 			case 'w': return "wreck";
 			case 'W': return "twister";
+			case 'm': return "map_waves1";
+			case 'n': return "map_waves2";
+			case 'b': return "map_waves3";
 			default: return "";
 		}
 	}
@@ -245,6 +248,26 @@ Meteor.startup(function(){
 	});
 	*/
 
+	/*
+	Meteor.setInterval(function(){
+		var len = MapTiles.find({type:"."}).fetch();
+		len = len[Math.floor(len.length * Math.random())];
+
+		if(len == undefined)
+			return;
+
+		len.left *= TILE_WIDTH;
+		len.top *= TILE_HEIGHT;
+
+		var type = Math.floor(Math.random() * 3) + 1;
+
+		$("#map").append('<div id="'+len._id+'" class="map_tile map_waves'+type+'" style="left: '+len.left+'px; top: '+len.top+'px;"><div class="animation"></div>');
+		Meteor.setTimeout(_.bind(function(){
+			$("#map").remove("#"+this);
+		}, len._id), 2000);
+	}, 1000);
+	*/
+
 	CurrentTurn.find({t: CURR_TURN.COMBAT_LAST_ORDERS}).observe({
 		changed: function(newDoc, oldDoc){
 			console.log(newDoc);
@@ -279,7 +302,7 @@ Meteor.startup(function(){
 					var len = Math.sqrt((sirenData.top - player.top) * (sirenData.top - player.top) +
 								(sirenData.left - player.left) * (sirenData.left - player.left));
 
-					if(len < 2)
+					if(len < 2.5)
 						$(this).addClass("nearby");
 					else
 						$(this).removeClass("nearby");

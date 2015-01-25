@@ -11,7 +11,8 @@ CURR_TURN = {
 CurrentTurnOrders = new Mongo.Collection("current_turn_orders");
 
 TURN = {
-	DURATION: 5,
+	DURATION: 2,
+	DURATION_COMBAT: 10,
 	STATE_MAP: 1,
 	STATE_COMBAT: 2,
 	STATE_FIGHT_SUMMARY: 3,
@@ -79,8 +80,8 @@ Merchant = function(x, y, t){
 	var obj = new Obj(x, y, OBJS_TYPES.MERCHANT);
 	obj.behaviour = t;
 	obj.hp = {
-		white: 10,
-		black: 0
+		white: Math.floor(Math.random() * 5),
+		black: Math.floor(Math.random() * 5)
 	};
 	return obj;
 }

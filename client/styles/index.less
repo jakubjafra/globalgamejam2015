@@ -6,6 +6,14 @@
 
 @main-water-color: #1fb3ff;
 
+b {
+	font-weight: bold;
+}
+
+small {
+	font-size: 85%;
+}
+
 #viewport {
 	position: absolute;
 	left: 0px;
@@ -17,6 +25,8 @@
 	background-color: @main-water-color;
 
 	overflow: hidden;
+
+	border-top-left-radius: 10px;
 }
 
 #map {
@@ -28,6 +38,8 @@
 	height: auto;
 
 	transition: top 2s, left 2s;
+
+
 }
 
 #background {
@@ -127,6 +139,23 @@
 		}
 	}
 
+	&.map_waves1 {
+		div.animation {
+			background-image: url("/animacje/light_bg1.png");
+		}
+	}
+
+	&.map_waves2 {
+		div.animation {
+			background-image: url("/animacje/light_bg2.png");
+		}
+	}
+
+	&.map_waves3 {
+		div.animation {
+			background-image: url("/animacje/light_bg3.png");
+		}
+	}
 
 	&.twister {
 
@@ -376,12 +405,15 @@
 	left: 800px;
 	top: 0px;
 
-	width: 200px;
-	height: 400px;
+	width: 199px;
+	height: 399px;
+
+	border-left: 1px solid black;
+	border-bottom: 1px solid black;
 
 	.list {
-		width: 200px;
-		height: 380px;
+		width: 199px;
+		height: 399px;
 		overflow: hidden;
 
 		& > div {
@@ -392,7 +424,13 @@
 		& > div:nth-child(2n) {
 			background-color: rgba(196, 196, 196, 0.1);
 		}
+
+		& > div:first-child {
+			border-top-right-radius: 10px;
+		}
 	}
+
+	border-top-right-radius: 10px;
 }
 
 #game {
@@ -405,7 +443,7 @@
 	margin-top: -225px;
 	margin-left: -500px;
 
-	border: 1px solid red;
+	border: 1px solid black;
 
 	-webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.5);
 	box-shadow: 0 5px 10px rgba(0,0,0,0.5);
@@ -418,8 +456,44 @@
 	top: 400px;
 	left: 0px;
 
-	width: 800px;
-	height: 50px;
+	width: 799px;
+	height: 49px;
+
+	border-bottom-left-radius: 10px;
+
+	border-top: 1px solid black;
+	border-right: 1px solid black;
+
+	#timeleft {
+		position: absolute;
+		right: 0px;
+		top: 0px;
+
+		width: 99px;
+		height: 49px;
+	}
+
+	#commandsCurrent {
+		position: absolute;
+		left: 500px;
+		top: 0px;
+
+		width: 200px;
+		height: 49px;
+	}
+
+	#commands {
+		padding-left: 10px;
+
+		position: absolute;
+		top: 0px;
+		left: 0px;
+
+		width: 500px;
+		height: 49px;
+
+		line-height: 22px;
+	}
 }
 
 #chat_input {
@@ -429,6 +503,8 @@
 
 	width: 196px;
 	height: 44px;
+
+	border-bottom-right-radius: 10px;
 }
 
 #combat_box {

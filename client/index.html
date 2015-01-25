@@ -17,19 +17,25 @@
 				</div>
 			{{/each}}
 		</div>
-		<!--
-		<div class="list">
-			
-		</div>
-		-->
 	</div>
 	<input id="chat_input" type="text" placeholder="chat input" focused />
-	<div id="helper_box">timeleft: {{ turnTimeleft }}
-	<div>{{#each commandsList}}
+	<div id="helper_box">
+		<div id="timeleft">
+			{{ turnTimeleft }}
+		</div>
+		<div id="commandsCurrent">
+			{{#each commandsList}}
 				<span>
 					{{ what }} ({{ seq }})
 				</span>
-			{{/each}}</div></div>
+			{{/each}}
+		</div>
+		<div id="commands">
+			<b>SHEEP CTRL:</b> UP / DOWN / RIGHT / LEFT / FIRE <small>(when enemy is close)</small>
+			<br>
+			<b>COMBAT:</b> ATTACK / DEFENSE / RUN
+		</div>
+	</div>
 </template>
 
 <template name="Viewport">
@@ -103,7 +109,7 @@
 				<img src="/mapa/wyspa_murzynow_bez_fal.png" style="display: none">
 			{{/if}}
 			{{#if isSiren}}
-				<img src="/animacje/cum_to_me.png">
+				<img src="/animacje/come_to_me.png">
 			{{/if}}
 			<div></div>
 		</div>

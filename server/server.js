@@ -2,19 +2,38 @@
 i - island
 s - siren
 d,f,g - stones(1, 2, 3)
-hexcode - big island
+hexcode - big island (0 - kupiecka, 1 - czarna)
+p - port
+m,n,b - fale
+W - twister
+w - wreck
 */
 
+/*
 var mapDesc = [
 	".0Ip..1pII..........",
 	".IIII.IIII.....i....",
 	".IIII.IIII...g......",
 	".IIII.III..........d",
 	"........s...........",
-	"....................",
+	"...........mnb......",
 	"...i.W...w...d......",
 	"........i...........",
 	"....................",
+];
+*/
+
+var mapDesc = [
+	".....d...g...n....w....d....m....W......n.....g...",
+	"..W......b...0Ip..............i.....f......m....W.",
+	"...m...s.....IIII......W..b..w..d....i....s....i..",
+	"..........g..IIII..d.m....s......n.......n..b.....",
+	".n..g..m.....IIII......i..w...1pII...w.......f....",
+	"b..........m....b.....n.......IIII.....m.d.....i..",
+	"...i.W...w...d...w........g...IIII..f......W..s...",
+	"........i.n.......s...i.......III..............m..",
+	"..m..s.........f.m.........i.......s...w..i.......",
+	".i.......f..m...........g.......W........b.....d.."
 ];
 
 var objsDesc = [
@@ -93,7 +112,7 @@ function moveObject(objectId, what){
 	}
 
 	var tile = MapTiles.findOne({top: playerState.top, left: playerState.left});
-	if(tile == undefined || (tile.type !== "." && tile.type !== "p" && tile.type !== "1" && tile.type !== "W")){
+	if(tile == undefined || (tile.type !== "." && tile.type !== "p" && tile.type !== "b" && tile.type !== "n" && tile.type !== "m" && tile.type !== "1" && tile.type !== "W")){
 		console.log("refused movement");
 		return false;
 	}
@@ -103,6 +122,7 @@ function moveObject(objectId, what){
 
 	if(objs != undefined){
 		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_COMBAT}});
+		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION_COMBAT}});
 	}
 
 	change.$set = {lastCommand: what};
@@ -271,14 +291,15 @@ function updateAgents(){
 var attackModifier = {
 	"attack": 1.75,
 	"defense": 0.5,
-	"run": 0.25
+	"run": 0
 };
 
 var defenseModifier = {
 	"attack": 0.5,
 	"defense": 1,
-	"run": 0.5
+	"run": 0.25
 };
+
 
 function getEnemyOrder(enemy){
 	switch(enemy.behaviour){
@@ -347,8 +368,10 @@ function updateCombat(order){
 	if(playerOrder == "run"){
 		var haveRunned = Math.floor(3 * Math.random()) >= 1;
 		if(haveRunned){
-			if(moveObject(player._id, directions[Math.floor(directions.length * Math.random())]) == true)
+			if(moveObject(player._id, directions[Math.floor(directions.length * Math.random())]) == true){
 				CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
+				return;
+			}
 			else
 				console.log("you didnt run away!");
 		}
@@ -357,12 +380,15 @@ function updateCombat(order){
 	if(enemyOrder == "run"){
 		var haveRunned = Math.floor(3 * Math.random()) >= 1;
 		if(haveRunned){
-			if(moveObject(enemy._id, directions[Math.floor(directions.length * Math.random())]) == true)
+			if(moveObject(enemy._id, directions[Math.floor(directions.length * Math.random())]) == true){
 				CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
+				return;
+			}
 			else
 				console.log("they didnt run away!");
 		}
 	}
+
 
 	if(playerHPLost >= (player.hp.black + player.hp.white)){
 		console.log("YOU LOST!");
@@ -410,6 +436,7 @@ function updateCombat(order){
 
 Meteor.startup(function(){
 	(function makeMap(map, objs){
+		Chat.remove({});
 		MapTiles.remove({});
 		MapObjects.remove({});
 		CurrentTurn.remove({});
@@ -438,14 +465,13 @@ Meteor.startup(function(){
 			return;
 		}
 
-
-		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION}});
-
 		MapObjects.update({}, {$set: {currTurnState: OBJS_STATE.NORMAL}}, {multi: true});
 
 		switch(state.value){
 			case TURN.STATE_MAP:
-				// updateAgents();
+				CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION}});
+
+				updateAgents();
 
 				var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
 
@@ -458,6 +484,8 @@ Meteor.startup(function(){
 				break;
 
 			case TURN.STATE_COMBAT:
+				CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION_COMBAT}});
+
 				var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
 
 				CurrentTurnOrders.remove({});
