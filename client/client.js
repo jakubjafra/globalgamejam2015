@@ -39,6 +39,16 @@ Template.Tile.helpers({
 	'isMerchantIsland': function(){
 		return this.type == '0';
 	},
+	'isMurzynskaIsland': function(){
+		return this.type == '1';
+	},
+	'isSiren': function(){
+		return this.type == "s";
+	},
+
+	'id': function(){
+		return this._id;
+	},
 
 	'tileClass': function(){
 		switch(this.type){
@@ -50,19 +60,6 @@ Template.Tile.helpers({
 			case '.': return "ground";
 			case '0': return "bigisland0";
 			case '1': return "bigisland1";
-			case '2': return "bigisland2";
-			case '3': return "bigisland3";
-			case '4': return "bigisland4";
-			case '5': return "bigisland5";
-			case '6': return "bigisland6";
-			case '7': return "bigisland7";
-			case '8': return "bigisland8";
-			case '9': return "bigisland9";
-			case 'A': return "bigislandA";
-			case 'B': return "bigislandB";
-			case 'C': return "bigislandC";
-			case 'D': return "bigislandD";
-			case 'E': return "bigislandE";
 			default: return "";
 		}
 	}
@@ -152,12 +149,26 @@ Template.Obj.helpers({
 	'topXY': function(){ return this.top * TILE_HEIGHT; }
 });
 
+Template.Combat.helpers({
+	'isCombatMode': function(){
+		return CurrentTurn.findOne({t: CURR_TURN.STATE}).value == TURN.STATE_COMBAT;
+	}
+});
+
 Meteor.startup(function(){
+	/*
+	CurrentTurn.find({t: CURR_TURN.STATE}).observeChanges({
+		changed: function(id, fields){
+			console.log(fields);
+		}
+	});
+	*/
+
 	MapObjects.find({}).observeChanges({
 		changed: function(id, fields){
+			console.log(fields);
+
 			if(fields.currTurnState != undefined){
-				console.log(fields);
-				console.log(id);
 				switch(fields.currTurnState){
 					case OBJS_STATE.NORMAL:
 						$("#"+id+" > img").removeClass("on_hitted");
@@ -170,6 +181,22 @@ Meteor.startup(function(){
 					default:
 						break;
 				}
+			}
+
+			var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+			if(id == player._id && (fields.top != undefined || fields.left != undefined)){
+				$(".siren").each(function(){
+					var ID = $(this).attr("id");
+					var sirenData = MapTiles.findOne({_id: ID});
+
+					var len = Math.sqrt((sirenData.top - player.top) * (sirenData.top - player.top) +
+								(sirenData.left - player.left) * (sirenData.left - player.left));
+
+					if(len < 2)
+						$(this).addClass("nearby");
+					else
+						$(this).removeClass("nearby");
+				});
 			}
 		}
 	})

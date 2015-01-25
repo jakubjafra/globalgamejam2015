@@ -30,6 +30,21 @@
 	transition: top 2s, left 2s;
 }
 
+#combat_box {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	left: 50%;
+	top: 50%;
+
+	width: 100px;
+	height: 100px;
+
+	background-color: red;
+
+	z-index: 100;
+}
+
 .map_tile {
 	/*
 	position: relative;
@@ -64,6 +79,23 @@
 		}
 	}
 
+	&.bigisland1 {
+		z-index: 2;
+
+		img {
+			display: block !important;
+			z-index: 3;
+		}
+
+		overflow: visible;
+		
+		div.animation {
+			height: 256px;
+			width: 256px;
+			background-image: url("/mapa/wyspa_murzynow_tylko_fala.png");
+		}
+	}
+
 	&.island {
 		background-image: url("/mapa/wyspa_z_palma_bez_fal.png");
 		div.animation {
@@ -95,6 +127,19 @@
 		background-image: url("/mapa/siren_bez_fal.png");
 		div.animation {
 			background-image: url("/mapa/siren_tylko_fala.png");
+		}
+		&.nearby {
+			& > img {
+				display: block;
+			}
+		}
+		img {
+			position: absolute;
+			top: 0px;
+			left: 0px;
+
+			z-index: 6;
+			display: none;
 		}
 	}
 

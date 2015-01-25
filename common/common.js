@@ -3,13 +3,16 @@ Chat = new Mongo.Collection("chat");
 CurrentTurn = new Mongo.Collection("current_turn");
 
 CURR_TURN = {
-	COUNTER: 1
+	COUNTER: 1,
+	STATE: 2
 };
 
 CurrentTurnOrders = new Mongo.Collection("current_turn_orders");
 
 TURN = {
-	DURATION: 2
+	DURATION: 2,
+	STATE_MAP: 1,
+	STATE_COMBAT: 2
 };
 
 ORDERS = [

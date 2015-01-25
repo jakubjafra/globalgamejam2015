@@ -39,7 +39,17 @@
 				{{> Obj}}
 			{{/each}}
 		</div>
+
+		{{> Combat}}
 	</div>
+</template>
+
+<template name="Combat">
+	{{#if isCombatMode}}
+	<div id="combat_box">
+		COMBATBOX
+	</div>
+	{{/if}}
 </template>
 
 <template name="Player">
@@ -56,9 +66,15 @@
 
 <template name="Tile">
 	{{#if isNotMare}}
-		<div class="map_tile {{ tileClass }}" style="top: {{ topXY }}px; left: {{ leftXY }}px;">
+		<div id="{{ id }}" class="map_tile {{ tileClass }}" style="top: {{ topXY }}px; left: {{ leftXY }}px;">
 			{{#if isMerchantIsland}}
 				<img src="/mapa/wyspa_kupiecka_przezroczysta_bez_fal.png" style="display: none">
+			{{/if}}
+			{{#if isMurzynskaIsland}}
+				<img src="/mapa/wyspa_murzynow_bez_fal.png" style="display: none">
+			{{/if}}
+			{{#if isSiren}}
+				<img src="/animacje/cum_to_me.png">
 			{{/if}}
 			<div></div>
 		</div>

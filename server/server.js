@@ -6,10 +6,10 @@ hexcode - big island
 */
 
 var mapDesc = [
-	".012................",
-	".3456..........i....",
-	".789A........g......",
-	".BCDE..............d",
+	".0Ip..1pII..........",
+	".IIII.IIII.....i....",
+	".IIII.IIII...g......",
+	".IIII.III..........d",
 	"........s...........",
 	"....................",
 	"...i.........d......",
@@ -19,7 +19,7 @@ var mapDesc = [
 
 var objsDesc = [
 	//new Merchant(3, 3, MERCHANTS.NORMAL),
-	new Player(5, 5),
+	new Player(7, 8),
 	new Merchant(8, 8, MERCHANTS.AGGRESIVE)
 ];
 
@@ -33,22 +33,34 @@ function isOrder(what){
 
 var directions = ["top", "left", "bottom", "right"];
 
-function doOrder(objectId, what){
-	switch(what){
-		case "top":
-		case "left":
-		case "bottom":
-		case "right":
-			moveObject(objectId, what);
+function doOrder(objectId, what, gamestate){
+	switch(gamestate){
+		case TURN.STATE_MAP:
+				switch(what){
+					case "top":
+					case "left":
+					case "bottom":
+					case "right":
+						moveObject(objectId, what);
+						break;
+
+					case "fire":
+						playerRandFire(objectId);
+						break;
+
+					default:
+						break;
+				}
 			break;
 
-		case "fire":
-			playerRandFire(objectId);
+		case TURN.STATE_COMBAT:
+				console.log(what);
 			break;
 
 		default:
 			break;
 	}
+	
 }
 
 function moveObject(objectId, what){
@@ -81,10 +93,15 @@ function moveObject(objectId, what){
 	}
 
 	var tile = MapTiles.findOne({top: playerState.top, left: playerState.left});
-	if(tile == undefined || (tile.type !== "." && tile.type !== "2")){
-		console.log(tile);
-		console.log("refused");
+	if(tile == undefined || (tile.type !== "." && tile.type !== "p" && tile.type !== "1")){
+		console.log("refused movement");
 		return;
+	}
+
+	var objs = MapObjects.findOne({top: playerState.top, left: playerState.left});
+
+	if(objs != undefined){
+		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_COMBAT}});
 	}
 
 	change.$set = {lastCommand: what};
@@ -102,15 +119,15 @@ function playerRandFire(objectId){
 	var minLeft = objState.left - 2;
 	var maxLeft = objState.left + 2;
 
-	var objectInRange = MapObjects.find({_id: {$ne: objectId},
-		$and: [
+	var objectInRange = MapObjects.find({$and: [ { _id: {$ne: objectId} },
+		{ $and: [
 			{ top: {$gte: minTop} },
 			{ top: {$lte: maxTop} }
-		], 
-		$and: [
+		] }, 
+		{ $and: [
 			{ left: {$gte: minLeft} },
 			{ left: {$lte: maxLeft} }
-		]
+		] } ]
 	}).fetch();
 
 	if(objectInRange.length == 0)
@@ -152,15 +169,15 @@ function isPlayerInFireRange(object){
 	var minLeft = object.left - 2;
 	var maxLeft = object.left + 2;
 
-	var objectInRange = MapObjects.findOne({_id: playerId,
-		$and: [
+	var objectInRange = MapObjects.findOne({$and: [ { _id: playerId },
+		{ $and: [
 			{ top: {$gte: minTop} },
 			{ top: {$lte: maxTop} }
-		], 
-		$and: [
+		] }, 
+		{ $and: [
 			{ left: {$gte: minLeft} },
 			{ left: {$lte: maxLeft} }
-		]
+		] } ]
 	});
 
 	if(objectInRange == undefined)
@@ -180,15 +197,6 @@ function isPlayerInDirectAttackRange(object){
 	var maxLeft = object.left + 1;
 
 	var objectInRange = MapObjects.findOne({_id: playerId,
-		$or: [
-			{ top: {$eq: minTop} },
-			{ top: {$eq: maxTop} },
-			{ left: {$eq: minLeft} },
-			{ left: {$eq: maxLeft} }
-		]
-	});
-
-	console.log({_id: playerId,
 		$or: [
 			{ top: {$eq: minTop} },
 			{ top: {$eq: maxTop} },
@@ -249,20 +257,33 @@ Meteor.startup(function(){
 		});
 
 		CurrentTurn.insert({t: CURR_TURN.COUNTER, timeleft: TURN.DURATION});
+		CurrentTurn.insert({t: CURR_TURN.STATE, value: TURN.STATE_MAP});
 	})(mapDesc, objsDesc);
 
 	Meteor.setInterval(function(){
 		var turn = CurrentTurn.findOne({t: CURR_TURN.COUNTER});
+		var state = CurrentTurn.findOne({t: CURR_TURN.STATE});
 
 		if(turn.timeleft > 0){
 			CurrentTurn.update({t: CURR_TURN.COUNTER}, {$inc: {timeleft: -1}});
 			return;
 		}
 
+		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION}});
+
 		MapObjects.update({}, {$set: {currTurnState: OBJS_STATE.NORMAL}}, {multi: true});
 
-		updateAgents();
-		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION}});
+		switch(state.value){
+			case TURN.STATE_MAP:
+				// updateAgents();
+				break;
+
+			case TURN.STATE_COMBAT:
+				break;
+
+			default:
+				break;
+		}
 
 		var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
 
@@ -271,7 +292,7 @@ Meteor.startup(function(){
 
 		CurrentTurnOrders.remove({});
 
-		doOrder(MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id, order.what);
+		doOrder(MapObjects.findOne({type: OBJS_TYPES.PLAYER})._id, order.what, state.value);
 	}, 1000);
 
 	Meteor.methods({
