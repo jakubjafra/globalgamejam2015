@@ -60,6 +60,8 @@ Template.Tile.helpers({
 			case '.': return "ground";
 			case '0': return "bigisland0";
 			case '1': return "bigisland1";
+			case 'w': return "wreck";
+			case 'W': return "twister";
 			default: return "";
 		}
 	}
@@ -149,9 +151,88 @@ Template.Obj.helpers({
 	'topXY': function(){ return this.top * TILE_HEIGHT; }
 });
 
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex ;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+
 Template.Combat.helpers({
 	'isCombatMode': function(){
-		return CurrentTurn.findOne({t: CURR_TURN.STATE}).value == TURN.STATE_COMBAT;
+		var val = CurrentTurn.findOne({t: CURR_TURN.STATE}).value;
+		return val == TURN.STATE_COMBAT || val == TURN.STATE_FIGHT_SUMMARY;
+	},
+	'playerDefense': function(){
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		return player.hp.white + player.hp.black * 2;
+	},
+	'playerAttack': function(){
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		return player.hp.white * 2 + player.hp.black;
+	},
+	'playerLastCommand': function(){
+		var r = CurrentTurn.findOne({t: CURR_TURN.COMBAT_LAST_ORDERS});
+		return r.player;
+	},
+	'enemyLastCommand': function(){
+		var r = CurrentTurn.findOne({t: CURR_TURN.COMBAT_LAST_ORDERS});
+		return r.player;
+	},
+	'enemyDefense': function(){
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		var enemy = MapObjects.findOne({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
+		return enemy.hp.white + enemy.hp.black * 2;
+	},
+	'enemyAttack': function(){
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		var enemy = MapObjects.findOne({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
+		return enemy.hp.white * 2 + enemy.hp.black;
+	},
+	'playerPiratesCount': function(){
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		return player.hp.white + player.hp.black;
+	},
+	'playerPirates': function(){
+		var arr = [];
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		for(var i = 0; i < player.hp.white; i++) arr.push({what: "bialy"});
+		for(var i = 0; i < player.hp.black; i++) arr.push({what: "czarny"});
+			shuffle(arr);
+		return arr;
+	},
+	'enemyPiratesCount': function(){
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		var enemy = MapObjects.findOne({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
+		return enemy.hp.white + enemy.hp.black;
+	},
+	'enemyPirates': function(){
+		var arr = [];
+		var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
+		var enemy = MapObjects.findOne({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
+		for(var i = 0; i < enemy.hp.black; i++) arr.push({what: "czarny"});
+		for(var i = 0; i < enemy.hp.white; i++) arr.push({what: "bialy"});
+			shuffle(arr);
+		return arr;
+	}
+});
+
+Template.GameLost.helpers({
+	'isGameOverMode': function(){
+		var val = CurrentTurn.findOne({t: CURR_TURN.STATE}).value;
+		return val == TURN.STATE_GAME_LOST;
 	}
 });
 
@@ -163,6 +244,12 @@ Meteor.startup(function(){
 		}
 	});
 	*/
+
+	CurrentTurn.find({t: CURR_TURN.COMBAT_LAST_ORDERS}).observe({
+		changed: function(newDoc, oldDoc){
+			console.log(newDoc);
+		}
+	});
 
 	MapObjects.find({}).observeChanges({
 		changed: function(id, fields){

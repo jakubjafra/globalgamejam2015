@@ -7,7 +7,7 @@
 @main-water-color: #1fb3ff;
 
 #viewport {
-	position: fixed;
+	position: absolute;
 	left: 0px;
 	top: 0px;
 
@@ -28,22 +28,6 @@
 	height: auto;
 
 	transition: top 2s, left 2s;
-}
-
-#combat_box {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-
-	margin-left: -250px;
-	margin-top: -150px;
-
-	width: 500px;
-	height: 300px;
-
-	background-color: red;
-
-	z-index: 100;
 }
 
 #background {
@@ -133,6 +117,78 @@
 		background-image: url("/mapa/stones_3_bez_fal.png");
 		div.animation {
 			background-image: url("/mapa/stones_3_tylko_fala.png");
+		}
+	}
+
+	&.wreck {
+		background-image: url("/mapa/shipwreck_bez_fal.png");
+		div.animation {
+			background-image: url("/mapa/shipwreck_tylko_fala.png");
+		}
+	}
+
+
+	&.twister {
+
+		div.animation {
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			width: @tile-width;
+			height: @tile-width;
+
+			z-index: 5;
+
+			@speed: 10s;
+
+			animation: twisterframes linear @speed;
+			animation-iteration-count: infinite;
+			transform-origin: 50% 50%;
+			-webkit-animation: twisterframes linear @speed;
+			-webkit-animation-iteration-count: infinite;
+			-webkit-transform-origin: 50% 50%;
+			-moz-animation: twisterframes linear @speed;
+			-moz-animation-iteration-count: infinite;
+			-moz-transform-origin: 50% 50%;
+			-o-animation: twisterframes linear @speed;
+			-o-animation-iteration-count: infinite;
+			-o-transform-origin: 50% 50%;
+			-ms-animation: twisterframes linear @speed;
+			-ms-animation-iteration-count: infinite;
+			-ms-transform-origin: 50% 50%;
+
+			background-image: url("/mapa/twister.png");
+		}
+
+
+		@keyframes twisterframes {
+			0% { opacity:0.5; transform:  rotate(0deg); }
+			50% { opacity:1; transform: rotate(-180deg); }
+			100% { opacity:0.5; transform: rotate(-360deg); }
+		}
+
+		@-moz-keyframes twisterframes {
+			0% { opacity:0.5; transform:  rotate(0deg); }
+			50% { opacity:1; transform: rotate(-180deg); }
+			100% { opacity:0.5; transform: rotate(-360deg); }
+		}
+
+		@-webkit-keyframes twisterframes {
+			0% { opacity:0.5; transform:  rotate(0deg); }
+			50% { opacity:1; transform: rotate(-180deg); }
+			100% { opacity:0.5; transform: rotate(-360deg); }
+		}
+
+		@-o-keyframes twisterframes {
+			0% { opacity:0.5; transform:  rotate(0deg); }
+			50% { opacity:1; transform: rotate(-180deg); }
+			100% { opacity:0.5; transform: rotate(-360deg); }
+		}
+
+		@-ms-keyframes twisterframes {
+			0% { opacity:0.5; transform:  rotate(0deg); }
+			50% { opacity:1; transform: rotate(-180deg); }
+			100% { opacity:0.5; transform: rotate(-360deg); }
 		}
 	}
 
@@ -316,14 +372,149 @@
 }
 
 #chat {
-	position: fixed;
-	right: 0px;
+	position: absolute;
+	left: 800px;
 	top: 0px;
 
+	width: 200px;
+	height: 400px;
+
 	.list {
-		width: 250px;
-		height: 250px;
-		background-color: red;
-		overflow-y: scroll;
+		width: 200px;
+		height: 380px;
+		overflow: hidden;
+
+		& > div {
+			background-color: white;
+			padding: 2px;
+		}
+
+		& > div:nth-child(2n) {
+			background-color: rgba(196, 196, 196, 0.1);
+		}
+	}
+}
+
+#game {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width:1000px;
+	height: 450px;
+
+	margin-top: -225px;
+	margin-left: -500px;
+
+	border: 1px solid red;
+
+	-webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+	box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+
+	border-radius: 10px;
+}
+
+#helper_box {
+	position: absolute;
+	top: 400px;
+	left: 0px;
+
+	width: 800px;
+	height: 50px;
+}
+
+#chat_input {
+	position: absolute;
+	left: 800px;
+	top: 400px; 
+
+	width: 196px;
+	height: 44px;
+}
+
+#combat_box {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+
+	margin-left: -300px;
+	margin-top: -150px;
+
+	width: 600px;
+	height: 300px;
+
+	background-image: url("/combat/board.png");
+
+	border-radius: 5px;
+	z-index: 100;
+
+	-webkit-box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+	box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+
+	#player_stats {
+		position: absolute;
+		top: 160px;
+		left: 10px;
+
+		width: 280px;
+		height: 32px;
+
+		border-radius: 5px;
+
+		background: linear-gradient(to left, rgba(0,196,0,0.5) 0%,rgba(0,0,0,0) 100%);
+
+		transition: width 2s, left 2s;
+
+		@size: 28px;
+		&.num_of_pirates_ { width: 0px; left: 10px + 10 * @size; }
+		&.num_of_pirates_1 { width: 1 * @size; left: 10px + (10 - 1) * @size; }
+		&.num_of_pirates_2 { width: 2 * @size; left: 10px + (10 - 2) * @size; }
+		&.num_of_pirates_3 { width: 3 * @size; left: 10px + (10 - 3) * @size; }
+		&.num_of_pirates_4 { width: 4 * @size; left: 10px + (10 - 4) * @size; }
+		&.num_of_pirates_5 { width: 5 * @size; left: 10px + (10 - 5) * @size; }
+		&.num_of_pirates_6 { width: 6 * @size; left: 10px + (10 - 6) * @size; }
+		&.num_of_pirates_7 { width: 7 * @size; left: 10px + (10 - 7) * @size; }
+		&.num_of_pirates_8 { width: 8 * @size; left: 10px + (10 - 8) * @size; }
+		&.num_of_pirates_9 { width: 9 * @size; left: 10px + (10 - 9) * @size; }
+		&.num_of_pirates_10 { width: 10 * @size; left: 10px + (10 - 10) * @size; }
+	}
+
+	#enemy_stats {
+		position: absolute;
+		top: 160px;
+		right: 10px;
+
+		width: 280px;
+		height: 32px;
+
+		border-radius: 5px;
+
+		background: linear-gradient(to right, rgba(196,0,0,0.5) 0%,rgba(0,0,0,0) 100%);
+
+		transition: width 2s, right 2s;
+
+		@size: 28px;
+		&.num_of_pirates_ { width: 0px; left: 10px + 10 * @size; }
+		&.num_of_pirates_1 { width: 1 * @size; right: 10px + (10 - 1) * @size; }
+		&.num_of_pirates_2 { width: 2 * @size; right: 10px + (10 - 2) * @size; }
+		&.num_of_pirates_3 { width: 3 * @size; right: 10px + (10 - 3) * @size; }
+		&.num_of_pirates_4 { width: 4 * @size; right: 10px + (10 - 4) * @size; }
+		&.num_of_pirates_5 { width: 5 * @size; right: 10px + (10 - 5) * @size; }
+		&.num_of_pirates_6 { width: 6 * @size; right: 10px + (10 - 6) * @size; }
+		&.num_of_pirates_7 { width: 7 * @size; right: 10px + (10 - 7) * @size; }
+		&.num_of_pirates_8 { width: 8 * @size; right: 10px + (10 - 8) * @size; }
+		&.num_of_pirates_9 { width: 9 * @size; right: 10px + (10 - 9) * @size; }
+		&.num_of_pirates_10 { width: 10 * @size; right: 10px + (10 - 10) * @size; }
+	}
+
+	#players_pirates {
+		position: absolute;
+		top: 140px;
+		right: 320px;
+	}
+
+	#enemy_pirates {
+		position: absolute;
+		top: 140px;
+		left: 320px;
 	}
 }

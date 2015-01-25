@@ -12,7 +12,7 @@ var mapDesc = [
 	".IIII.III..........d",
 	"........s...........",
 	"....................",
-	"...i.........d......",
+	"...i.W...w...d......",
 	"........i...........",
 	"....................",
 ];
@@ -89,14 +89,15 @@ function moveObject(objectId, what){
 			break;
 
 		default:
-			return;
+			return false;
 	}
 
 	var tile = MapTiles.findOne({top: playerState.top, left: playerState.left});
-	if(tile == undefined || (tile.type !== "." && tile.type !== "p" && tile.type !== "1")){
+	if(tile == undefined || (tile.type !== "." && tile.type !== "p" && tile.type !== "1" && tile.type !== "W")){
 		console.log("refused movement");
-		return;
+		return false;
 	}
+	
 
 	var objs = MapObjects.findOne({top: playerState.top, left: playerState.left});
 
@@ -106,7 +107,17 @@ function moveObject(objectId, what){
 
 	change.$set = {lastCommand: what};
 
+	if(tile.type == "W"){
+		var x = MapTiles.find({type: '.'}).fetch();
+		var y = x[Math.floor(x.length * Math.random())];
+
+		change = {$set: {left: y.left, top: y.top, lastCommand: what}};
+	}
+
+
 	MapObjects.update({_id: objectId}, change);
+
+	return true;
 }
 
 function playerRandFire(objectId){
@@ -201,7 +212,6 @@ function isPlayerInFireRange(object){
 	if(objectInRange == undefined)
 		return false;
 	else{
-		console.log(objectInRange);
 		return objectInRange._id;
 	}
 }
@@ -259,14 +269,14 @@ function updateAgents(){
 }
 
 var attackModifier = {
-	"attack": 1.5,
+	"attack": 1.75,
 	"defense": 0.5,
 	"run": 0.25
 };
 
 var defenseModifier = {
 	"attack": 0.5,
-	"defense": 1.5,
+	"defense": 1,
 	"run": 0.5
 };
 
@@ -276,7 +286,12 @@ function getEnemyOrder(enemy){
 			return "run";
 
 		case MERCHANTS.NORMAL:
-			return "defense";
+			if(enemy.hp.white == 0)
+				return "run";
+			else if(enemy.hp.white >= enemy.hp.black)
+				return "attack";
+			else
+				return "defense";
 
 		case MERCHANTS.AGGRESIVE:
 			return "attack";
@@ -301,6 +316,11 @@ function updateCombat(order){
 	var player = MapObjects.findOne({type: OBJS_TYPES.PLAYER});
 	var enemy = MapObjects.findOne({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
 
+	if(enemy == undefined){
+		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
+		return;
+	}
+
 	var playerOrder = order;
 	var enemyOrder = getEnemyOrder(enemy);
 
@@ -322,8 +342,31 @@ function updateCombat(order){
 	console.log("you choosed " + playerOrder);
 	console.log("they choosed " + enemyOrder);
 
+	CurrentTurn.update({t: CURR_TURN.COMBAT_LAST_ORDERS}, {$set: {player: playerOrder, enemy: enemyOrder}});
+
+	if(playerOrder == "run"){
+		var haveRunned = Math.floor(3 * Math.random()) >= 1;
+		if(haveRunned){
+			if(moveObject(player._id, directions[Math.floor(directions.length * Math.random())]) == true)
+				CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
+			else
+				console.log("you didnt run away!");
+		}
+	}
+
+	if(enemyOrder == "run"){
+		var haveRunned = Math.floor(3 * Math.random()) >= 1;
+		if(haveRunned){
+			if(moveObject(enemy._id, directions[Math.floor(directions.length * Math.random())]) == true)
+				CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
+			else
+				console.log("they didnt run away!");
+		}
+	}
+
 	if(playerHPLost >= (player.hp.black + player.hp.white)){
 		console.log("YOU LOST!");
+		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_GAME_LOST}});
 	} else{
 		var playerBlackLosts = 0;
 		var playerWhiteLosts = 0;
@@ -345,7 +388,7 @@ function updateCombat(order){
 	if(enemyHPLost >= (enemy.hp.black + enemy.hp.white)){
 		console.log("they died! you have won!");
 		MapObjects.remove({type: OBJS_TYPES.MERCHANT, top: player.top, left: player.left});
-		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
+		CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_FIGHT_SUMMARY}});
 	} else{
 		var enemyBlackLosts = 0;
 		var enemyWhiteLosts = 0;
@@ -383,6 +426,7 @@ Meteor.startup(function(){
 
 		CurrentTurn.insert({t: CURR_TURN.COUNTER, timeleft: TURN.DURATION});
 		CurrentTurn.insert({t: CURR_TURN.STATE, value: TURN.STATE_MAP});
+		CurrentTurn.insert({t: CURR_TURN.COMBAT_LAST_ORDERS, player: "", enemy: ""});
 	})(mapDesc, objsDesc);
 
 	Meteor.setInterval(function(){
@@ -394,13 +438,14 @@ Meteor.startup(function(){
 			return;
 		}
 
+
 		CurrentTurn.update({t: CURR_TURN.COUNTER}, {$set: {timeleft: TURN.DURATION}});
 
 		MapObjects.update({}, {$set: {currTurnState: OBJS_STATE.NORMAL}}, {multi: true});
 
 		switch(state.value){
 			case TURN.STATE_MAP:
-				updateAgents();
+				// updateAgents();
 
 				var order = CurrentTurnOrders.findOne({}, { sort: {"seq": -1} });
 
@@ -421,7 +466,10 @@ Meteor.startup(function(){
 					updateCombat(order.what);
 				else
 					updateCombat("");
-				
+				break;
+
+			case TURN.STATE_FIGHT_SUMMARY:
+				CurrentTurn.update({t: CURR_TURN.STATE}, {$set: {value: TURN.STATE_MAP}});
 				break;
 
 			default:

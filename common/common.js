@@ -4,15 +4,18 @@ CurrentTurn = new Mongo.Collection("current_turn");
 
 CURR_TURN = {
 	COUNTER: 1,
-	STATE: 2
+	STATE: 2,
+	COMBAT_LAST_ORDERS: 3
 };
 
 CurrentTurnOrders = new Mongo.Collection("current_turn_orders");
 
 TURN = {
-	DURATION: 10,
+	DURATION: 5,
 	STATE_MAP: 1,
-	STATE_COMBAT: 2
+	STATE_COMBAT: 2,
+	STATE_FIGHT_SUMMARY: 3,
+	STATE_GAME_LOST: 4
 };
 
 ORDERS = [
@@ -59,8 +62,8 @@ Obj = function(x, y, type){
 	this.type = type;
 
 	this.hp = {
-		white: 10,
-		black: 10
+		white: 5,
+		black: 5
 	};
 
 	this.lastCommand = "top";
@@ -76,8 +79,8 @@ Merchant = function(x, y, t){
 	var obj = new Obj(x, y, OBJS_TYPES.MERCHANT);
 	obj.behaviour = t;
 	obj.hp = {
-		white: 2,
-		black: 2
+		white: 10,
+		black: 0
 	};
 	return obj;
 }

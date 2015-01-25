@@ -2,8 +2,10 @@
 </head>
 
 <body>
-	{{> Chat}}
-	{{> Viewport}}
+	<div id="game">
+		{{> Chat}}
+		{{> Viewport}}
+	</div>
 </body>
 
 <template name="Chat">
@@ -15,16 +17,19 @@
 				</div>
 			{{/each}}
 		</div>
-		<input id="chat_input" type="text" placeholder="chat input" focused />
-		timeleft: {{ turnTimeleft }}
+		<!--
 		<div class="list">
-			{{#each commandsList}}
-				<div>
-					{{ what }} ({{ seq }})
-				</div>
-			{{/each}}
+			
 		</div>
+		-->
 	</div>
+	<input id="chat_input" type="text" placeholder="chat input" focused />
+	<div id="helper_box">timeleft: {{ turnTimeleft }}
+	<div>{{#each commandsList}}
+				<span>
+					{{ what }} ({{ seq }})
+				</span>
+			{{/each}}</div></div>
 </template>
 
 <template name="Viewport">
@@ -41,6 +46,7 @@
 		</div>
 
 		{{> Combat}}
+		{{> GameLost}}
 	</div>
 </template>
 
@@ -48,8 +54,29 @@
 	{{#if isCombatMode}}
 		<div id="background">
 			<div id="combat_box">
-				COMBATBOX
+				<div id="player_stats" class="num_of_pirates_{{ playerPiratesCount }} {{ playerLastCommand }}">
+				</div>
+				<div id="enemy_stats" class="num_of_pirates_{{ enemyPiratesCount }} {{ enemyLastCommand }}">
+				</div>
+				<div id="players_pirates">
+					{{#each playerPirates}}
+						<img src="/combat/{{ what }}_pirat.png" style="display: inline-block;">
+					{{/each}}
+				</div>
+				<div id="enemy_pirates">
+					{{#each enemyPirates}}
+						<img src="/combat/{{ what }}_pirat_prawy.png" style="display: inline-block;">
+					{{/each}}
+				</div>
 			</div>
+		</div>
+	{{/if}}
+</template>
+
+<template name="GameLost">
+	{{#if isGameOverMode}}
+		<div id="background">
+			YOU LOST!
 		</div>
 	{{/if}}
 </template>
